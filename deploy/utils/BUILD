@@ -58,3 +58,9 @@ py_test(
         ":utils",
     ],
 )
+
+py_library(
+    name = "field_generating",
+    srcs = ["field_generating.py"],
+    deps = [":utils"],
+)

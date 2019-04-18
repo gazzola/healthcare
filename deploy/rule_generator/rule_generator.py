@@ -105,7 +105,8 @@ def get_all_project_configs(config_dict):
         ProjectConfig(
             project=audit_logs_project,
             audit_logs_project=None,
-            forseti=forseti))
+            forseti=forseti,
+            generated_fields=config_dict.get('generated_fields')))
 
   project_dicts = config_dict.get('projects', [])
 
@@ -120,5 +121,6 @@ def get_all_project_configs(config_dict):
         ProjectConfig(
             project=project,
             audit_logs_project=audit_logs_project,
-            forseti=forseti))
+            forseti=forseti,
+            generated_fields=config_dict.get('generated_fields')))
   return project_configs, config_dict['overall']

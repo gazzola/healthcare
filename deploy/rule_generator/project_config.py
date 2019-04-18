@@ -74,7 +74,7 @@ GCEInstance = collections.namedtuple('GCEInstance', ['id', 'location'])
 class ProjectConfig(object):
   """Configuration for a single GCP project."""
 
-  def __init__(self, project, audit_logs_project, forseti):
+  def __init__(self, project, audit_logs_project, forseti, generated_fields):
     """Initialize.
 
     Args:
@@ -83,14 +83,18 @@ class ProjectConfig(object):
         audit_logs_project (dict): The audit logs project, or None if project is
             using local audit logs.
         forseti (dict): The Forseti config dictionary, or None.
+        generated_fields (dict): The generated fields of all projects.
     """
     self._project_config = project
     self._uses_local_audit_logs = audit_logs_project is None
+    self.generated_fields = generated_fields
 
     self.project_id = self._project_config['project_id']
     self.enabled_apis = self._project_config.get('enabled_apis')
 
-    self._forseti_gcp_reader = forseti['generated_fields']['service_account']
+    forseti_project_id = forseti['project']['project_id']
+    self._forseti_gcp_reader = generated_fields[forseti_project_id][
+        'service_account']
 
     # List of default access groups, with 'group:' prefix.
     self._owners = [_group_name(self._project_config['owners_group'])]
@@ -131,7 +135,8 @@ class ProjectConfig(object):
     # groups (if any).
     editors = [
         _group_name(g) for g in self._project_config.get('editors_groups', [])]
-    project_num = self._project_config['generated_fields']['project_number']
+    project_num = self.generated_fields[
+        self._project_config['project_id']]['project_number']
     for service_account in _EDITOR_SERVICE_ACCOUNTS:
       editors.append(_service_account_name(service_account.format(
           project_num=project_num)))
@@ -255,8 +260,8 @@ class ProjectConfig(object):
 
     owners = self._audit_logs_owners
     writers = [
-        _service_account_name(self._project_config['generated_fields']
-                              ['log_sink_service_account'])
+        _service_account_name(self.generated_fields[
+            self._project_config['project_id']]['log_sink_service_account'])
     ]
     readers = self._auditors
 
@@ -270,9 +275,8 @@ class ProjectConfig(object):
   def get_gce_instances(self):
     """Returns a list of GCE instances."""
     instance_name_to_id = {
-        info['name']: info['id']
-        for info in self._project_config['generated_fields'].get(
-            'gce_instance_info', [])
+        info['name']: info['id'] for info in self.generated_fields[
+            self._project_config['project_id']].get('gce_instance_info', [])
     }
 
     gce_instances = []
